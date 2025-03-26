@@ -20,9 +20,15 @@ from utils.gpt_train import train_gpt
 from faster_whisper import WhisperModel
 
 from TTS.tts.configs.xtts_config import XttsConfig
-from TTS.tts.models.xtts import Xtts
+from TTS.tts.models.xtts import Xtts, XttsAudioConfig, XttsArgs
+from TTS.tts.configs.shared_configs import BaseDatasetConfig
 
 import requests
+
+torch.serialization.add_safe_globals([XttsConfig])
+torch.serialization.add_safe_globals([XttsAudioConfig])
+torch.serialization.add_safe_globals([BaseDatasetConfig])
+torch.serialization.add_safe_globals([XttsArgs])
 
 def download_file(url, destination):
     try:
@@ -405,7 +411,7 @@ if __name__ == "__main__":
             
             def train_model(custom_model, version, language, train_csv, eval_csv, num_epochs, batch_size, grad_acumm, output_path, max_audio_length):
                 clear_gpu_cache()
-          
+                print(f"> {custom_model}\n > {version}\n > {language}\n > {train_csv}\n > {eval_csv}\n > {num_epochs}\n > {batch_size}\n")  
                 # Check if `custom_model` is a URL and download it if true.
                 if custom_model.startswith("http"):
                     print("Downloading custom model from URL...")
@@ -486,7 +492,7 @@ if __name__ == "__main__":
                     return "Unoptimized model not found in ready folder", ""
             
                 # Load the checkpoint and remove unnecessary parts.
-                checkpoint = torch.load(model_path, map_location=torch.device("cpu"))
+                checkpoint = torch.load(model_path, map_location=torch.device("cpu"), weights_only=False)
                 del checkpoint["optimizer"]
 
                 for key in list(checkpoint["model"].keys()):
